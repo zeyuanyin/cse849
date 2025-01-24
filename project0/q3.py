@@ -4,7 +4,8 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from tqdm import tqdm, trange
 
-seeds_list = [1, 2, 3, 4, 5]
+# seeds_list = [1, 2, 3, 4, 5]
+seeds_list = [1]
 # TODO: For each seed, plot the fitted model along with the training
 # data points. The data samples need to be plotted only once. Follow the
 # instructions from q2.py on how to plot the results.
@@ -118,13 +119,13 @@ for seed in seeds_list:
             train_loss_list.append(loss.item())
             step += 1
 
-    # TODO: Evaluate your model on the validation set.
-    # Remember to set the model in evaluation mode and to use
-    # torch.no_grad()
+
+    # plot the training data and predicted labels
     model.eval()
+    train_loader_plot = DataLoader(train_dataset, batch_size=batch_size, shuffle=False) # no shuffle to plot the data in order
     y_hat_list_seed = []
     with torch.no_grad():
-        for batch in val_loader:
+        for batch in train_loader_plot:
             x, y = batch
             x = x.cuda()
             x = x.unsqueeze(-1)
@@ -132,11 +133,19 @@ for seed in seeds_list:
             y_hat_list_seed.extend(y_hat.cpu().numpy().flatten())
     y_hat_list.append(y_hat_list_seed)
 
+
+
+    # TODO: Evaluate your model on the validation set.
+    # Remember to set the model in evaluation mode and to use
+    # torch.no_grad()
+
+
+
 # Plot the results
-plt.scatter(x_val, y_val, c="black", marker="^")
+plt.scatter(x_train, y_train, c="black", marker="^", label="Real Data")
 colors = ["blue", "green", "red", "yellow", "purple"]
 for i, y_hat in enumerate(y_hat_list):
-    plt.scatter(x_val, y_hat, c=colors[i], label=f"Seed {seeds_list[i]}")
+    plt.scatter(x_train, y_hat, c=colors[i], label=f"Seed {seeds_list[i]}")
 plt.grid(True)
 plt.legend()
 plt.savefig("q3_plot.png")
