@@ -89,36 +89,25 @@ for seed in seeds_list:
     step = 0
 
     for e in trange(num_epochs):
-        # TODO: Set your model to training mode.
         model.train()
         for batch in tqdm(train_loader, leave=False, desc="Training"):
-            # TODO: Zero the gradients
             optimizer.zero_grad()
 
-            # TODO: Unpack the batch. It is a tuple containing x and y.
             x, y = batch
             x = x.cuda()
             y = y.cuda()
             x = x.unsqueeze(-1)
             y = y.unsqueeze(-1)
-
-            # TODO: Pass it through the model to get the predicted y_hat.
             y_hat = model(x)
 
-            # TODO: Calculate the loss using the loss function.
             loss = loss_fn(y_hat, y)
-
-            # TODO: Backpropagate the loss.
             loss.backward()
-
-            # TODO: Update the model weights.
             optimizer.step()
 
-            # TODO: Store the training loss in the list
             train_step_list.append(step)
             train_loss_list.append(loss.item())
             step += 1
-
+    print(f"Training loss: {sum(train_loss_list)/len(train_loss_list)}")
     model_list.append(model)
 
 # Task 1: Plot the training data and predicted labels
@@ -126,15 +115,15 @@ y_hat_list = []
 for model in model_list:
     model.eval()
     train_loader_plot = DataLoader(train_dataset, batch_size=batch_size, shuffle=False) # no shuffle to plot the data in order
-    y_hat_list_seed = []
+    y_hat_current = []
     with torch.no_grad():
         for batch in train_loader_plot:
             x, y = batch
             x = x.cuda()
             x = x.unsqueeze(-1)
             y_hat = model(x)
-            y_hat_list_seed.extend(y_hat.cpu().numpy().flatten())
-    y_hat_list.append(y_hat_list_seed)
+            y_hat_current.extend(y_hat.cpu().numpy().flatten())
+    y_hat_list.append(y_hat_current)
 
 POINT_SIZE = 5
 plt.scatter(x_train, y_train, c="black", marker="^", label="Real Data", s=POINT_SIZE)
