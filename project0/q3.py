@@ -8,24 +8,25 @@ seeds_list = [1, 2, 3, 4, 5]
 # TODO: For each seed, plot the fitted model along with the training
 # data points. The data samples need to be plotted only once. Follow the
 # instructions from q2.py on how to plot the results.
+y_hat_list = []
 for seed in seeds_list:
     torch.manual_seed(seed)
 
     """
     Load the dataset from zip files
     """
-    x_train = None
-    y_train = None
-    x_val = None
-    y_val = None
-    x_test = None
-
+    data = torch.load('HW0_data.pt', weights_only=True)
+    x_train = data['x_train']
+    y_train = data['y_train']
+    x_val = data['x_val']
+    y_val = data['y_val']
+    x_test = data['x_test']
     """
     Create corresponding datasets.
     """
-    train_dataset = None
-    val_dataset = None
-    test_dataset = None # skip y_test in the test dataset
+    train_dataset = torch.utils.data.TensorDataset(x_train, y_train)
+    val_dataset = torch.utils.data.TensorDataset(x_val, y_val)
+    test_dataset = torch.utils.data.TensorDataset(x_test) # skip y_test in the test dataset
 
     """
     Create dataloaders for each dataset.
@@ -41,7 +42,13 @@ for seed in seeds_list:
     """
     Create the MLP as described in the PDF
     """
-    model = None
+    model = nn.Sequential(
+        nn.Linear(1, 10),
+        nn.LeakyReLU(),
+        nn.Linear(10, 10),
+        nn.LeakyReLU(),
+        nn.Linear(10, 1)
+    ).cuda()
 
     """
     Initialize the model after setting PyTorch seed to model_seed. But we
@@ -51,8 +58,12 @@ for seed in seeds_list:
     """
     rng = torch.get_rng_state()
     # TODO: set seed
-
+    model_seed = 90
+    torch.manual_seed(model_seed)
     # TODO: Sample the values from a normal distribution
+    for layer in model:
+        if isinstance(layer, nn.Linear):
+            torch.nn.init.xavier_normal_(layer.weight)
 
     torch.set_rng_state(rng)
 
@@ -69,7 +80,7 @@ for seed in seeds_list:
     """
     Set up the loss function as nn.MSELoss.
     """
-    loss_fn = None
+    loss_fn = nn.MSELoss()
 
     num_epochs = 1000
 
@@ -82,32 +93,66 @@ for seed in seeds_list:
 
     for e in trange(num_epochs):
         # TODO: Set your model to training mode.
-
+        model.train()
         for batch in tqdm(train_loader, leave=False, desc="Training"):
             # TODO: Zero the gradients
-            
+            optimizer.zero_grad()
+
             # TODO: Unpack the batch. It is a tuple containing x and y.
+            x, y = batch
+            x = x.cuda()
+            y = y.cuda()
+            x = x.unsqueeze(-1)
+            y = y.unsqueeze(-1)
+
 
             # TODO: Pass it through the model to get the predicted y_hat.
-
+            y_hat = model(x)
+            
             # TODO: Calculate the loss using the loss function.
+            loss = loss_fn(y_hat, y)
 
             # TODO: Backpropagate the loss.
+            loss.backward()
 
             # TODO: Update the model weights.
-        
+            optimizer.step()
+
             # TODO: Store the training loss in the list
-        
-        # TODO: Evaluate your model on the validation set.
-        # Remember to set the model in evaluation mode and to use
-        # torch.no_grad()
+            train_step_list.append(step)
+            train_loss_list.append(loss.item())
+            step += 1
 
-# TODO: Run the model on the test set
-with torch.no_grad():
-    yhat_test = None
+    # TODO: Evaluate your model on the validation set.
+    # Remember to set the model in evaluation mode and to use
+    # torch.no_grad()
+    model.eval()
+    y_hat_list_seed = []
+    with torch.no_grad():
+        for batch in val_loader:
+            x, y = batch
+            x = x.cuda()
+            x = x.unsqueeze(-1)
+            y_hat = model(x)
+            y_hat_list_seed.extend(y_hat.cpu().numpy().flatten())
+    y_hat_list.append(y_hat_list_seed)
 
-with open("q3_test_output.txt", "w") as f:
-    for yhat in yhat_test:
-        f.write(f"{yhat.item()}\n")
+# Plot the results
+plt.scatter(x_val, y_val, c='black', marker='^')
+colors = ['blue', 'green', 'red', 'yellow', 'purple']
+for i, y_hat in enumerate(y_hat_list):
+    plt.scatter(x_val, y_hat, c=colors[i], label=f'Seed {seeds_list[i]}')
+plt.grid(True)
+plt.legend()
+plt.savefig('q3_plot.png')
 
-# TODO: Save the model as q3_model.pt
+# # TODO: Run the model on the test set
+# with torch.no_grad():
+#     yhat_test = None
+
+# with open("q3_test_output.txt", "w") as f:
+#     for yhat in yhat_test:
+#         f.write(f"{yhat.item()}\n")
+
+# # TODO: Save the model as q3_model.pt
+# torch.save(model.state_dict(), f'q3_model.pt')
