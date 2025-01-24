@@ -19,7 +19,7 @@ E.g., if you are student number 160474145, set the seed to 145.
 model_seed = 90
 
 # TODO: Set the seed
-torch.manual_seed(model_seed)
+torch.manual_seed(overall_seed)
 
 """
 Generate the dataset as describe in the HW pdf file. Complete the class
