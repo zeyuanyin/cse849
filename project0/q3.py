@@ -4,12 +4,12 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from tqdm import tqdm, trange
 
-# seeds_list = [1, 2, 3, 4, 5]
-seeds_list = [1]
+seeds_list = [1, 2, 3, 4, 5]
+# seeds_list = [1]  # for debugging
 # TODO: For each seed, plot the fitted model along with the training
 # data points. The data samples need to be plotted only once. Follow the
 # instructions from q2.py on how to plot the results.
-y_hat_list = []
+model_list = []
 for seed in seeds_list:
     torch.manual_seed(seed)
 
@@ -119,8 +119,11 @@ for seed in seeds_list:
             train_loss_list.append(loss.item())
             step += 1
 
+    model_list.append(model)
 
-    # plot the training data and predicted labels
+# Task 1: Plot the training data and predicted labels
+y_hat_list = []
+for model in model_list:
     model.eval()
     train_loader_plot = DataLoader(train_dataset, batch_size=batch_size, shuffle=False) # no shuffle to plot the data in order
     y_hat_list_seed = []
@@ -133,30 +136,57 @@ for seed in seeds_list:
             y_hat_list_seed.extend(y_hat.cpu().numpy().flatten())
     y_hat_list.append(y_hat_list_seed)
 
-
-
-    # TODO: Evaluate your model on the validation set.
-    # Remember to set the model in evaluation mode and to use
-    # torch.no_grad()
-
-
-
-# Plot the results
-plt.scatter(x_train, y_train, c="black", marker="^", label="Real Data")
+POINT_SIZE = 5
+plt.scatter(x_train, y_train, c="black", marker="^", label="Real Data", s=POINT_SIZE)
 colors = ["blue", "green", "red", "yellow", "purple"]
 for i, y_hat in enumerate(y_hat_list):
-    plt.scatter(x_train, y_hat, c=colors[i], label=f"Seed {seeds_list[i]}")
+    plt.scatter(x_train, y_hat, c=colors[i], label=f"Seed {seeds_list[i]}", s=POINT_SIZE)
 plt.grid(True)
+plt.title("Data and Fitted Models with different seeds")
+plt.xlabel("x")
+plt.ylabel("y")
 plt.legend()
-plt.savefig("q3_plot.png")
+plt.savefig("q3_plot.png", dpi=1200, bbox_inches="tight")
 
-# # TODO: Run the model on the test set
-# with torch.no_grad():
-#     yhat_test = None
+# Task 2: Evaluate model on the validation set and pick the best model
+loss_fn = nn.MSELoss()
+loss_list = []
+for model in model_list:
+    model.eval()
+    loss = 0
+    with torch.no_grad():
+        for batch in val_loader:
+            x, y = batch
+            x = x.cuda()
+            y = y.cuda()
+            x = x.unsqueeze(-1)
+            y = y.unsqueeze(-1)
+            y_hat = model(x)
+            loss += loss_fn(y_hat, y).cpu().numpy().item()
+    loss_list.append(loss / len(val_loader))
 
-# with open("q3_test_output.txt", "w") as f:
-#     for yhat in yhat_test:
-#         f.write(f"{yhat.item()}\n")
+
+print("Loss on validation set: ", loss_list)
+best_model_index = loss_list.index(min(loss_list))
+best_model = model_list[best_model_index]
+print(f"Best model index: {best_model_index},", 
+      f"Loss: {loss_list[best_model_index]},",
+      f"Seed: {seeds_list[best_model_index]}")
+
+
+# Task 3: Run the model on the test set and save the output
+yhat_test = []
+with torch.no_grad():
+    for batch in test_loader:
+        x = batch[0]
+        x = x.cuda()
+        x = x.unsqueeze(-1)
+        y_hat = best_model(x)
+        yhat_test.extend(y_hat.cpu().numpy().flatten())
+
+with open("q3_test_output.txt", "w") as f:
+    for yhat in yhat_test:
+        f.write(f"{yhat.item()}\n")
 
 # # TODO: Save the model as q3_model.pt
-# torch.save(model.state_dict(), f'q3_model.pt')
+torch.save(best_model.state_dict(), f"q3_model.pt")
