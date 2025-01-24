@@ -15,29 +15,26 @@ for seed in seeds_list:
     """
     Load the dataset from zip files
     """
-    data = torch.load('HW0_data.pt', weights_only=True)
-    x_train = data['x_train']
-    y_train = data['y_train']
-    x_val = data['x_val']
-    y_val = data['y_val']
-    x_test = data['x_test']
+    data = torch.load("HW0_data.pt", weights_only=True)
+    x_train = data["x_train"]
+    y_train = data["y_train"]
+    x_val = data["x_val"]
+    y_val = data["y_val"]
+    x_test = data["x_test"]
     """
     Create corresponding datasets.
     """
     train_dataset = torch.utils.data.TensorDataset(x_train, y_train)
     val_dataset = torch.utils.data.TensorDataset(x_val, y_val)
-    test_dataset = torch.utils.data.TensorDataset(x_test) # skip y_test in the test dataset
+    test_dataset = torch.utils.data.TensorDataset(x_test)  # skip y_test in the test dataset
 
     """
     Create dataloaders for each dataset.
     """
-    batch_size = 2000 # Use the entire dataset
-    train_loader = DataLoader(train_dataset, batch_size=batch_size,
-                            shuffle=True, drop_last=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size,
-                            shuffle=False, drop_last=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size,
-                             shuffle=False, drop_last=False)
+    batch_size = 2000  # Use the entire dataset
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
 
     """
     Create the MLP as described in the PDF
@@ -74,8 +71,7 @@ for seed in seeds_list:
     """
     lr = 1e-2
     weight_decay = 1e-4
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr,
-                                  weight_decay=weight_decay)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     """
     Set up the loss function as nn.MSELoss.
@@ -105,10 +101,9 @@ for seed in seeds_list:
             x = x.unsqueeze(-1)
             y = y.unsqueeze(-1)
 
-
             # TODO: Pass it through the model to get the predicted y_hat.
             y_hat = model(x)
-            
+
             # TODO: Calculate the loss using the loss function.
             loss = loss_fn(y_hat, y)
 
@@ -138,13 +133,13 @@ for seed in seeds_list:
     y_hat_list.append(y_hat_list_seed)
 
 # Plot the results
-plt.scatter(x_val, y_val, c='black', marker='^')
-colors = ['blue', 'green', 'red', 'yellow', 'purple']
+plt.scatter(x_val, y_val, c="black", marker="^")
+colors = ["blue", "green", "red", "yellow", "purple"]
 for i, y_hat in enumerate(y_hat_list):
-    plt.scatter(x_val, y_hat, c=colors[i], label=f'Seed {seeds_list[i]}')
+    plt.scatter(x_val, y_hat, c=colors[i], label=f"Seed {seeds_list[i]}")
 plt.grid(True)
 plt.legend()
-plt.savefig('q3_plot.png')
+plt.savefig("q3_plot.png")
 
 # # TODO: Run the model on the test set
 # with torch.no_grad():
