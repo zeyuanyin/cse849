@@ -42,9 +42,9 @@ for seed in seeds_list:
     """
     model = nn.Sequential(
         nn.Linear(1, 10),
-        nn.LeakyReLU(),
+        nn.ReLU(),
         nn.Linear(10, 10),
-        nn.LeakyReLU(),
+        nn.ReLU(),
         nn.Linear(10, 1)
     ).cuda()
 
@@ -163,7 +163,7 @@ print(f"Best model index: {best_model_index},",
       f"Seed: {seeds_list[best_model_index]}")
 
 
-# Task 3: Run the model on the test set and save the output
+# Task 3: Run the best model on the test set and save the output
 yhat_test = []
 with torch.no_grad():
     for batch in test_loader:
