@@ -6,40 +6,42 @@ from tqdm import tqdm
 
 def theta(x1, x2):
     # Calculate theta as provided in the question
-    pass
+    return torch.atan2(x2, x1)
 
 def r(x1, x2):
     # Calculate r as provided in the question
-    pass    
+    return torch.sqrt(x1**2 + x2**2)
 
 def y(x1, x2):
     # First calculate r and theta using the functions defined above and
     # then calculate y as provided in the question.
-    pass
+    r_value = r(x1, x2)
+    theta_value = theta(x1, x2)
+    return r_value**2 * (torch.sin(6*theta_value + 2*r_value)**2 + 1)
 
 def grad_theta_x1(x1, x2):
     # Calculate the gradient of theta w.r.t. x1
-    pass
+    return -x2 / (x1**2 + x2**2)
 
 def grad_theta_x2(x1, x2):
     # Calculate the gradient of theta w.r.t. x2
-    pass
+    return x1 / (x1**2 + x2**2)
 
 def grad_r_x1(x1, x2):
     # Calculate the gradient of r w.r.t. x1
-    pass
+    return x1 / (x1**2 + x2**2)**0.5
 
 def grad_r_x2(x1, x2):
     # Calculate the gradient of r w.r.t. x2
-    pass
+    return x2 / (x1**2 + x2**2)**0.5
 
 def grad_y_theta(rval, thetaval):
     # Calculate the gradient of y w.r.t. theta
-    pass
-
+    return rval**2 * 2 * torch.sin(6*thetaval + 2*rval) * torch.cos(6*thetaval + 2*rval) * 6
+        
 def grad_y_r(rval, thetaval):
     # Calculate the gradient of y w.r.t. r
-    pass
+    return 2 * rval * (torch.sin(6*thetaval + 2*rval)**2 + 1) + rval**2 * 2 * torch.sin(6*thetaval + 2*rval) * torch.cos(6*thetaval + 2*rval) *2
 
 def grad_y_x1(x1, x2):
     # Calculate the gradient of y w.r.t. x1. First
@@ -47,7 +49,10 @@ def grad_y_x1(x1, x2):
     # functions defined above. Then calculate the gradients of theta and
     # r w.r.t. x1 using the functions defined above. Finally, use the
     # chain rule to calculate the gradient of y w.r.t. x1.
-    pass
+    r_value = r(x1, x2)
+    theta_value = theta(x1, x2)
+    return grad_y_theta(r_value, theta_value) * grad_theta_x1(x1, x2) + \
+            grad_y_r(r_value, theta_value) * grad_r_x1(x1, x2)
 
 def grad_y_x2(x1, x2):
     # Calculate the gradient of y w.r.t. x2. First
@@ -55,7 +60,10 @@ def grad_y_x2(x1, x2):
     # functions defined above. Then calculate the gradients of theta and
     # r w.r.t. x2 using the functions defined above. Finally, use the
     # chain rule to calculate the gradient of y w.r.t. x2.
-    pass
+    r_value = r(x1, x2)
+    theta_value = theta(x1, x2)
+    return grad_y_theta(r_value, theta_value) * grad_theta_x2(x1, x2) + \
+            grad_y_r(r_value, theta_value) * grad_r_x2(x1, x2)
 
 
 
@@ -79,8 +87,8 @@ for lam_idx, lam in enumerate(lams_list):
 
         # Find random starting points for x1 and x2 between [-5, 5] x
         # [-5, 5] using torch.rand
-        x1 = None
-        x2 = None
+        x1 = torch.rand(1) * 10 - 5
+        x2 = torch.rand(1) * 10 - 5
 
         # Store the values for plotting
         y_vals = []
@@ -89,7 +97,7 @@ for lam_idx, lam in enumerate(lams_list):
 
         for step in range(num_steps):
             # Calculate the value of y
-            yval = None
+            yval = y(x1, x2)
 
             # Store the value
             y_vals.append(yval)
@@ -99,7 +107,9 @@ for lam_idx, lam in enumerate(lams_list):
             x2_grad = grad_y_x2(x1, x2)
 
             # Write the update equation for x1 and x2
-
+            x1 = x1 - lam * x1_grad
+            x2 = x2 - lam * x2_grad
+            
             # Store the updated values for plotting
             x1_vals.append(x1.item())
             x2_vals.append(x2.item())
@@ -125,6 +135,6 @@ for lam_idx, lam in enumerate(lams_list):
         fig.suptitle(f"Step size: {lam}, seed: {seed}")
 
         fig.tight_layout()
-        fig.savefig(f"plots/q1_{lam}_{seed}.png", dpi=300)
+        fig.savefig(f"plots/q1_{lam}_{seed}.png", dpi=600, bbox_inches="tight")
         plt.clf()
         plt.close(fig)
