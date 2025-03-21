@@ -11,7 +11,7 @@ train_loader, test_loader = create_dataloaders()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # load the weights
-model.load_state_dict(torch.load("q1_model.pt", weights_only=True))
+model.load_state_dict(torch.load("q1_plots_W_bs32_lr0.005_Erasing_onecycle_0.3_25_10000_E300.pt", weights_only=True))
 model.to(device)
 
 model.eval()
@@ -26,9 +26,17 @@ all_labels = torch.zeros(len(test_loader.dataset))
 step = 0
 for images, labels in test_loader:
     # TODO: Forward pass with intermediate outputs = True
-    _, [x1, x2, x3, x4, x5] = None
+    _, [x1, x2, x3, x4, x5] = model(images.to(device), intermediate_outputs=True)
     # TODO: Calculate the norm of the intermediate outputs along the
     # spatial dimensions. Check the PDF.
+
+    # print(x1.shape) # torch.Size([512, 16, 40, 40])
+    x1 = torch.norm(x1, p=2, dim=(2, 3))
+    x2 = torch.norm(x2, p=2, dim=(2, 3))
+    x3 = torch.norm(x3, p=2, dim=(2, 3))
+    x4 = torch.norm(x4, p=2, dim=(2, 3))
+    x5 = torch.norm(x5, p=2, dim=(2, 3))
+    # print(x1.shape) # torch.Size([512, 16])
 
     # The following code assumes that x1, ..., x5 are the norms of the
     # intermediate outputs. You may need to change this to suit your code.
